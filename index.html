@@ -187,6 +187,26 @@
 
   /* ---------- meanings ---------- */
   .meanings { margin-bottom: 34px; }
+  .section-head {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 16px; flex-wrap: wrap;
+  }
+  .section-head h2 { flex: 1 1 auto; }
+  .toggle {
+    display: flex; margin-bottom: 12px; border: 1px solid var(--ink-soft);
+    flex: 0 0 auto;
+  }
+  .toggle button {
+    font-family: "IBM Plex Sans", sans-serif; font-size: 12px;
+    letter-spacing: .08em; text-transform: uppercase;
+    padding: 7px 14px; border: 0; background: var(--cell); color: var(--ink-soft);
+    cursor: pointer; transition: background .12s, color .12s;
+  }
+  .toggle button + button { border-left: 1px solid var(--ink-soft); }
+  .toggle button .cn { text-transform: none; letter-spacing: .04em; font-size: 13px; }
+  .toggle button:hover { color: var(--ink); }
+  .toggle button.on { background: var(--ink); color: var(--card); }
+  .toggle button:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
   .meaning-grid {
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
     background: var(--rule); border: 1px solid var(--rule);
@@ -211,6 +231,7 @@
     font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-faint);
     font-family: "IBM Plex Mono", monospace;
   }
+  .m.muted .zh, .m.muted .en, .m.muted .num { opacity: .42; }
   .m.absent { background: var(--flag-wash); }
   .m.absent .num, .m.absent .count { color: var(--flag); }
   .m.is-hot { background: var(--flag-wash); }
@@ -308,7 +329,13 @@
   </div>
 
   <section class="meanings">
-    <h2>What each number means <span class="cn" style="text-transform:none;letter-spacing:.04em">数字含义</span></h2>
+    <div class="section-head">
+      <h2>What each number means <span class="cn" style="text-transform:none;letter-spacing:.04em">数字含义</span></h2>
+      <div class="toggle" role="group" aria-label="Meaning set">
+        <button type="button" data-view="have" class="on">When you have it</button>
+        <button type="button" data-view="miss">When it's missing <span class="cn">缺失</span></button>
+      </div>
+    </div>
     <div class="meaning-grid" id="meanings"></div>
   </section>
 
@@ -365,6 +392,27 @@
   var reduce = function (n) { var v = n; while (v > 9) v = digits(v); return v; };
 
   // meanings as taught in the 亚洲易经文化交流协会 slides
+  var MISS = {
+    1: ["缺少自信，没有安全感，关键时刻迷茫，缺乏决断力！",
+        "Short on confidence and security; goes blank at the decisive moment, struggles to commit."],
+    2: ["在家不好好说话，缺乏耐心，不愿意倾听！",
+        "Speaks badly to the people at home; impatient, unwilling to listen."],
+    3: ["抓住机会的能力弱，不善于表达自己的想法和感受，自己认为不重要的事情比较懒，没有行动力！",
+        "Slow to seize an opening; poor at voicing thoughts and feelings; lazy about anything they judge unimportant, so little gets started."],
+    4: ["自控力差，被动学习！",
+        "Weak self-control; only learns when pushed."],
+    5: ["看谁都是好人，分不清小人贵人，容易信错人！",
+        "Takes everyone for a good person; cannot tell a benefactor from an opportunist, and trusts the wrong ones."],
+    6: ["大方别人，小气自己，花钱花不到点子上！",
+        "Generous to others, stingy with themselves; the money never goes where it counts."],
+    7: ["是别人的贵人，总是帮别人了，自己有事没人帮，遇事不轻易求人！",
+        "Everyone else's benefactor — always helping, never helped, and too proud to ask."],
+    8: ["不愿意管闲事，答应别人的事儿不给办好，吃不好睡不好，抗压能力弱！",
+        "Won't get involved in others' business; leaves promises half-done; eats and sleeps badly, and buckles under pressure."],
+    9: ["无论怎么做都没人说好，非常委屈！容易给别人做嫁衣！",
+        "Whatever they do goes unpraised — a deep sense of grievance; ends up doing the work someone else gets credit for."]
+  };
+
   var MEAN = {
     1: ["当领导", "Be the boss — take charge of a team"],
     2: ["靠嘴征服世界", "Conquer the world with words"],
@@ -522,20 +570,42 @@
       : '<div class="none">None — every digit 1–9 appears.</div>';
     document.getElementById("missing-meaning").innerHTML = miss.length
       ? miss.map(function (n) {
-          return '<div><b>' + n + '</b> &nbsp;<span class="zh">' + MEAN[n][0] + '</span> — ' + MEAN[n][1] + '</div>';
+          return '<div><b>' + n + '</b> &nbsp;<span class="zh">' + MISS[n][0] + '</span><br>' + MISS[n][1] + '</div>';
         }).join("")
       : '<div>Nothing absent from this chart.</div>';
 
+    LAST = count;
+    renderMeanings();
+  }
+
+  var LAST = {}, VIEW = "have";
+
+  function renderMeanings() {
+    var set = VIEW === "miss" ? MISS : MEAN;
     document.getElementById("meanings").innerHTML = [1,2,3,4,5,6,7,8,9].map(function (n) {
-      var c = count[n] || 0;
-      return '<div class="m' + (c ? "" : " absent") + '" data-num="' + n + '">' +
+      var c = LAST[n] || 0, miss = VIEW === "miss";
+      var note = miss
+        ? (c ? "not missing — does not apply" : "applies to this chart")
+        : (c ? "appears " + c + "×" : "missing from this chart");
+      return '<div class="m' + (c ? "" : " absent") + (miss && c ? " muted" : "") +
+        '" data-num="' + n + '">' +
         '<div class="num">' + n + '</div>' +
-        '<div class="zh">' + MEAN[n][0] + '</div>' +
-        '<div class="en">' + MEAN[n][1] + '</div>' +
-        '<div class="count">' + (c ? "appears " + c + "×" : "missing") + '</div>' +
+        '<div class="zh">' + set[n][0] + '</div>' +
+        '<div class="en">' + set[n][1] + '</div>' +
+        '<div class="count">' + note + '</div>' +
         '</div>';
     }).join("");
   }
+
+  document.querySelectorAll(".toggle button").forEach(function (b) {
+    b.addEventListener("click", function () {
+      VIEW = b.getAttribute("data-view");
+      document.querySelectorAll(".toggle button").forEach(function (o) {
+        o.classList.toggle("on", o === b);
+      });
+      renderMeanings();
+    });
+  });
 
   function hot(key, on) {
     document.querySelectorAll('[data-key="' + key + '"]').forEach(function (el) {
