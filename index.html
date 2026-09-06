@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Interactive SHUYI 生命信息 life-number chart: enter a birth date and the full pyramid, wing strips and missing number fill in.">
+<meta name="description" content="Interactive SHUYI 生命信息 life-number chart: enter a birth date and the full pyramid, wing strips, missing number and per-digit meanings fill in.">
 <meta name="color-scheme" content="light dark">
 <meta property="og:title" content="Life Number Worksheet">
 <meta property="og:description" content="The SHUYI 生命信息 chart, reverse-engineered and made interactive.">
@@ -179,10 +179,42 @@
   .caplabel { font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase; fill: var(--ink-faint); text-anchor: middle; }
   .caplabel-cn { font-size: 12px; fill: var(--ink-soft); text-anchor: middle; }
   .formula { font-family: "Zilla Slab", serif; font-size: 13px; fill: var(--ink-soft); text-anchor: middle; }
-  .strip rect { fill: var(--cell); stroke: var(--ink-soft); stroke-width: 1; }
+  .strip rect { fill: var(--cell); stroke: var(--ink-soft); stroke-width: 1; transition: fill .12s; }
+  .strip g.is-hot rect { fill: var(--flag-wash); stroke: var(--flag); stroke-width: 2; }
   .strip .num { font-family: "IBM Plex Mono", monospace; font-size: 17px; font-weight: 500; fill: var(--ink); text-anchor: middle; dominant-baseline: central; }
   .strip .key { font-family: "Zilla Slab", serif; font-size: 12px; fill: var(--ink-faint); text-anchor: middle; }
   .arrowline { stroke: var(--ink-faint); stroke-width: 1; fill: none; }
+
+  /* ---------- meanings ---------- */
+  .meanings { margin-bottom: 34px; }
+  .meaning-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+    background: var(--rule); border: 1px solid var(--rule);
+  }
+  @media (max-width: 860px) { .meaning-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 520px) { .meaning-grid { grid-template-columns: 1fr; } }
+  .m {
+    background: var(--card); padding: 14px 16px;
+    display: grid; grid-template-columns: auto 1fr; column-gap: 14px; row-gap: 2px;
+    align-items: baseline;
+    transition: background .12s;
+  }
+  .m .num {
+    grid-row: 1 / span 3;
+    font-family: "IBM Plex Mono", monospace; font-size: 30px; font-weight: 600;
+    color: var(--ink); line-height: 1; align-self: center;
+    width: 40px; text-align: center;
+  }
+  .m .zh { font-family: "Noto Serif SC", serif; font-size: 15px; color: var(--ink); line-height: 1.4; }
+  .m .en { font-size: 13px; color: var(--ink-soft); line-height: 1.4; }
+  .m .count {
+    font-size: 10px; letter-spacing: .14em; text-transform: uppercase; color: var(--ink-faint);
+    font-family: "IBM Plex Mono", monospace;
+  }
+  .m.absent { background: var(--flag-wash); }
+  .m.absent .num, .m.absent .count { color: var(--flag); }
+  .m.is-hot { background: var(--flag-wash); }
+  .m:hover { cursor: default; }
 
   /* ---------- lower grid ---------- */
   .cols { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 34px; align-items: start; }
@@ -226,6 +258,11 @@
   .missing .cap { font-size: 11px; letter-spacing: .16em; text-transform: uppercase; color: var(--ink-faint); }
   .missing .cap .cn { display: block; font-size: 15px; letter-spacing: .06em; color: var(--ink-soft); text-transform: none; margin-bottom: 2px; }
 
+  .missing-meaning { margin-top: 14px; font-size: 13.5px; color: var(--ink-soft); }
+  .missing-meaning div + div { margin-top: 5px; }
+  .missing-meaning b { font-family: "IBM Plex Mono", monospace; color: var(--flag); font-weight: 600; }
+  .missing-meaning .zh { font-family: "Noto Serif SC", serif; color: var(--ink); }
+
   .note { border-left: 3px solid var(--flag); padding-left: 14px; }
   .note h3 { font-family: "Zilla Slab", serif; font-size: 15px; margin: 0 0 6px; color: var(--flag); }
 
@@ -260,6 +297,8 @@
       <input id="y" type="number" min="1000" max="2999" value="1961" inputmode="numeric">
     </div>
   </div>
+  <p class="hint">Loaded with the date from the scanned worksheet — <b>7 June 1961</b>. The year splits into
+    century <b>19</b> and year <b>61</b>, exactly as the printed form asks for it.</p>
 
   <div class="sheet">
     <svg id="chart" viewBox="0 0 760 560" role="img" aria-labelledby="charttitle">
@@ -267,6 +306,11 @@
       <g id="chart-body"></g>
     </svg>
   </div>
+
+  <section class="meanings">
+    <h2>What each number means <span class="cn" style="text-transform:none;letter-spacing:.04em">数字含义</span></h2>
+    <div class="meaning-grid" id="meanings"></div>
+  </section>
 
   <div class="cols">
     <section>
@@ -286,6 +330,7 @@
           <div class="cap">Absent from 1–9</div>
           <div class="digits" id="missing"></div>
         </div>
+        <div class="missing-meaning" id="missing-meaning"></div>
       </div>
 
       <div class="panel">
@@ -308,7 +353,9 @@
     </div>
   </div>
 
-  <footer>Decoded from a completed SHUYI 生命信息 worksheet. Numerology, not arithmetic with a claim on anything.</footer>
+  <footer>Chart decoded from a completed SHUYI 生命信息 worksheet; number meanings as taught in the
+    亚洲易经文化交流协会 course slides. Hover any card to find that number in the pyramid.
+    Numerology, not arithmetic with a claim on anything.</footer>
 </div>
 
 <script>
@@ -316,6 +363,19 @@
   var dr = function (n) { return n === 0 ? 0 : 1 + ((n - 1) % 9); };
   var digits = function (n) { var s = 0; String(Math.abs(n)).split("").forEach(function (c) { s += +c; }); return s; };
   var reduce = function (n) { var v = n; while (v > 9) v = digits(v); return v; };
+
+  // meanings as taught in the 亚洲易经文化交流协会 slides
+  var MEAN = {
+    1: ["当领导", "Be the boss — take charge of a team"],
+    2: ["靠嘴征服世界", "Conquer the world with words"],
+    3: ["成为贵族", "Become nobility"],
+    4: ["按照自己的思维去规划所有人的人生", "Plan everyone's life by your own thinking"],
+    5: ["成为领袖", "Become a leader of people"],
+    6: ["用钱去征服世界", "Conquer the world with money"],
+    7: ["掌控所有的人", "Hold everyone under your control"],
+    8: ["拿到属于自己的权利", "Take the power that is rightfully yours"],
+    9: ["君临天下", "Reign over all under heaven"]
+  };
 
   // node geometry, mirroring the printed sheet
   var P = {
@@ -355,7 +415,7 @@
 
   function node(key, val, cls) {
     var p = P[key], r = key === "T" ? 26 : key === "G" ? 23 : 20;
-    return '<g class="node ' + (cls || "") + '" data-key="' + key + '">' +
+    return '<g class="node ' + (cls || "") + '" data-key="' + key + '" data-val="' + val + '">' +
       '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="' + r + '"></circle>' +
       '<text class="val" x="' + p[0] + '" y="' + p[1] + '">' + val + '</text>' +
       (key === "T" ? "" : '<text class="key" x="' + (p[0] + r + 11) + '" y="' + (p[1] - r + 4) + '">' + key + '</text>') +
@@ -388,9 +448,10 @@
     var out = '<g class="strip">';
     order.forEach(function (c, i) {
       var x = x0 + i * 44;
-      out += '<rect x="' + x + '" y="' + y0 + '" width="44" height="38"></rect>' +
+      out += '<g data-val="' + c[1] + '" data-key="' + c[0] + '">' +
+             '<rect x="' + x + '" y="' + y0 + '" width="44" height="38"></rect>' +
              '<text class="num" x="' + (x + 22) + '" y="' + (y0 + 19) + '">' + c[1] + '</text>' +
-             '<text class="key" x="' + (x + 22) + '" y="' + (y0 + 54) + '">' + c[0] + '</text>';
+             '<text class="key" x="' + (x + 22) + '" y="' + (y0 + 54) + '">' + c[0] + '</text></g>';
     });
     var xs = x0, xe = x0 + order.length * 44;
     var ay = y0 + 64;
@@ -450,14 +511,30 @@
         '<td class="v">' + s[3] + '</td></tr>';
     }).join("");
 
-    var present = {};
+    var count = {};
     ["A", "B", "C", "D", "E", "F", "G", "T", "H", "I", "J", "K", "L", "M", "N", "O", "P"]
-      .forEach(function (k) { present[v[k]] = 1; });
+      .forEach(function (k) { count[v[k]] = (count[v[k]] || 0) + 1; });
     var miss = [];
-    for (var i = 1; i <= 9; i++) if (!present[i]) miss.push(i);
+    for (var i = 1; i <= 9; i++) if (!count[i]) miss.push(i);
+
     document.getElementById("missing").innerHTML = miss.length
       ? miss.map(function (n) { return "<span>" + n + "</span>"; }).join("")
       : '<div class="none">None — every digit 1–9 appears.</div>';
+    document.getElementById("missing-meaning").innerHTML = miss.length
+      ? miss.map(function (n) {
+          return '<div><b>' + n + '</b> &nbsp;<span class="zh">' + MEAN[n][0] + '</span> — ' + MEAN[n][1] + '</div>';
+        }).join("")
+      : '<div>Nothing absent from this chart.</div>';
+
+    document.getElementById("meanings").innerHTML = [1,2,3,4,5,6,7,8,9].map(function (n) {
+      var c = count[n] || 0;
+      return '<div class="m' + (c ? "" : " absent") + '" data-num="' + n + '">' +
+        '<div class="num">' + n + '</div>' +
+        '<div class="zh">' + MEAN[n][0] + '</div>' +
+        '<div class="en">' + MEAN[n][1] + '</div>' +
+        '<div class="count">' + (c ? "appears " + c + "×" : "missing") + '</div>' +
+        '</div>';
+    }).join("");
   }
 
   function hot(key, on) {
@@ -465,12 +542,18 @@
       el.classList.toggle("is-hot", on);
     });
   }
-  document.addEventListener("mouseover", function (e) {
-    var t = e.target.closest("[data-key]"); if (t) hot(t.getAttribute("data-key"), true);
-  });
-  document.addEventListener("mouseout", function (e) {
-    var t = e.target.closest("[data-key]"); if (t) hot(t.getAttribute("data-key"), false);
-  });
+  function hotVal(n, on) {
+    document.querySelectorAll('[data-val="' + n + '"], .m[data-num="' + n + '"]')
+      .forEach(function (el) { el.classList.toggle("is-hot", on); });
+  }
+  function sweep(e, on) {
+    var k = e.target.closest("[data-key]");
+    if (k) hot(k.getAttribute("data-key"), on);
+    var m = e.target.closest(".m[data-num]");
+    if (m) hotVal(m.getAttribute("data-num"), on);
+  }
+  document.addEventListener("mouseover", function (e) { sweep(e, true); });
+  document.addEventListener("mouseout", function (e) { sweep(e, false); });
 
   function refresh() {
     var d = Math.min(31, Math.max(1, +document.getElementById("d").value || 1));
