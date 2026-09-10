@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Interactive SHUYI 生命信息 life-number chart: enter a birth date and the full pyramid, wing strips, missing number and per-digit meanings fill in.">
+<meta name="description" content="Interactive SHUYI 生命信息 life-number chart: enter a birth date and the pyramid, wing strips, missing number and full per-digit profiles fill in.">
 <meta name="color-scheme" content="light dark">
 <meta property="og:title" content="Life Number Worksheet">
 <meta property="og:description" content="The SHUYI 生命信息 chart, reverse-engineered and made interactive.">
@@ -237,6 +237,65 @@
   .m.is-hot { background: var(--flag-wash); }
   .m:hover { cursor: default; }
 
+  /* ---------- profile ---------- */
+  .profile { margin-bottom: 34px; }
+  .pick-hint { font-size: 12.5px; color: var(--ink-faint); margin: 0 0 14px; }
+  .m { cursor: pointer; }
+  .m.sel { box-shadow: inset 3px 0 0 var(--ink); }
+  .m.absent.sel { box-shadow: inset 3px 0 0 var(--flag); }
+  .node circle, .strip g rect { cursor: pointer; }
+
+  .profile-body { border: 1px solid var(--rule); background: var(--card); box-shadow: var(--shadow); }
+  .p-head {
+    display: flex; align-items: center; gap: 22px;
+    padding: 18px 22px; border-bottom: 1px solid var(--rule); flex-wrap: wrap;
+  }
+  .p-num {
+    font-family: "IBM Plex Mono", monospace; font-size: 52px; font-weight: 600;
+    line-height: 1; color: var(--ink); width: 56px; text-align: center;
+  }
+  .p-lines { flex: 1 1 260px; display: grid; gap: 4px; }
+  .p-lines .lead { font-family: "Noto Serif SC", serif; font-size: 16px; color: var(--ink); }
+  .p-lines .lead-en { font-size: 13.5px; color: var(--ink-soft); }
+  .p-state {
+    font-size: 10px; letter-spacing: .16em; text-transform: uppercase;
+    font-family: "IBM Plex Mono", monospace; color: var(--ink-faint);
+  }
+  .p-state.gone { color: var(--flag); }
+
+  .p-keys { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--rule); }
+  @media (max-width: 620px) { .p-keys { grid-template-columns: 1fr; } }
+  .p-col { background: var(--card); padding: 16px 22px 18px; }
+  .p-col h3 {
+    font-size: 11px; letter-spacing: .16em; text-transform: uppercase; margin: 0 0 10px;
+    font-weight: 600;
+  }
+  .p-col.good h3 { color: var(--band); }
+  .p-col.bad h3 { color: var(--flag); }
+  .p-col h3 .cn { font-size: 14px; letter-spacing: .04em; text-transform: none; margin-right: 7px; }
+  .p-col ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+  .p-col li { display: flex; gap: 9px; align-items: baseline; font-size: 13px; }
+  .p-col li .zh { font-family: "Noto Serif SC", serif; font-size: 14px; color: var(--ink); min-width: 5.4em; }
+  .p-col li .en { color: var(--ink-soft); }
+
+  .p-row { display: grid; grid-template-columns: 168px 1fr; border-top: 1px solid var(--rule); }
+  @media (max-width: 620px) { .p-row { grid-template-columns: 1fr; } }
+  .p-row .lab {
+    padding: 15px 22px; font-size: 11px; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--ink-soft); border-right: 1px solid var(--rule-soft);
+  }
+  .p-row .lab .cn {
+    display: block; font-size: 15px; letter-spacing: .04em; text-transform: none;
+    color: var(--ink); margin-bottom: 2px;
+  }
+  @media (max-width: 620px) { .p-row .lab { border-right: 0; padding-bottom: 0; } }
+  .p-row .txt { padding: 15px 22px; }
+  .p-row .txt .zh {
+    font-family: "Noto Serif SC", serif; font-size: 14.5px; color: var(--ink);
+    line-height: 1.75; display: block; margin-bottom: 5px;
+  }
+  .p-row .txt .en { font-size: 13.5px; color: var(--ink-soft); line-height: 1.6; }
+
   /* ---------- lower grid ---------- */
   .cols { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 34px; align-items: start; }
   @media (max-width: 820px) { .cols { grid-template-columns: 1fr; } }
@@ -339,6 +398,14 @@
     <div class="meaning-grid" id="meanings"></div>
   </section>
 
+  <section class="profile">
+    <div class="section-head">
+      <h2>Number profile <span class="cn" style="text-transform:none;letter-spacing:.04em">数字详解</span></h2>
+      <p class="pick-hint">Click any number — card above or circle in the pyramid</p>
+    </div>
+    <div class="profile-body" id="profile"></div>
+  </section>
+
   <div class="cols">
     <section>
       <h2>Derivation</h2>
@@ -380,8 +447,9 @@
     </div>
   </div>
 
-  <footer>Chart decoded from a completed SHUYI 生命信息 worksheet; number meanings as taught in the
-    亚洲易经文化交流协会 course slides. Hover any card to find that number in the pyramid.
+  <footer>Chart decoded from a completed SHUYI 生命信息 worksheet. One-line meanings and the 缺失数字
+    readings follow the 亚洲易经文化交流协会 course slides; the trait tables follow the circulated
+    正面／负面 number cards. Hover a card to find that number in the pyramid, click to read it in full.
     Numerology, not arithmetic with a claim on anything.</footer>
 </div>
 
@@ -423,6 +491,147 @@
     7: ["掌控所有的人", "Hold everyone under your control"],
     8: ["拿到属于自己的权利", "Take the power that is rightfully yours"],
     9: ["君临天下", "Reign over all under heaven"]
+  };
+
+  var ROWLAB = [["优势", "Strengths"], ["劣势", "Weaknesses"],
+                ["个性特征", "Character"], ["尝试改善", "Work on this"]];
+
+  var PROF = {
+    1: {
+      pos: [["创造","Creative"],["自信","Confident"],["独立","Independent"],
+            ["有领导力","Natural leader"],["有分析力","Analytical"],["有组织系统","Systematic"]],
+      neg: [["自我","Self-centred"],["孤独","Solitary"],["沉迷者","Prone to addiction"],
+            ["傲慢固执","Arrogant, stubborn"],["个人主义","Individualist"],["冷漠苛刻","Cold and harsh"]],
+      rows: [
+        ["天性聪明，多才多艺，最有原创性的艺术家，是个很得人心的朋友，许多人被吸引，而且为人仁慈，极得朋友的喜爱",
+         "Naturally clever and many-talented — the most original of artists. A well-liked friend who draws people in, kind-hearted and much loved."],
+        ["固执，自大，自我为中心，容易沉迷于某种不良嗜好",
+         "Stubborn, self-important, self-centred, and easily pulled into a bad habit."],
+        ["感情独立，在交际应酬和钱财管理方面都不依赖对方，向往各自的私人空间，活动自由，孤独的。",
+         "Emotionally self-sufficient; leans on no one for social life or money. Wants private space and freedom of movement — and is solitary with it."],
+        ["试着放下自我，少发表个人意见，多点时间让别人发表",
+         "Set the ego down. Offer fewer opinions and leave more room for other people to speak."]]
+    },
+    2: {
+      pos: [["沟通","Communicative"],["宽容","Tolerant"],["知足","Contented"],
+            ["有耐性","Patient"],["温和有礼","Gentle, courteous"],["有同情心","Compassionate"]],
+      neg: [["犹豫不决","Indecisive"],["依赖性强","Dependent"],["没有条理","Disorganised"],
+            ["易被影响","Easily swayed"],["得过且过","Drifts along"],["容易意志消沉","Sinks into low spirits"]],
+      rows: [
+        ["很随和，有爱心，大方温和受欢迎，在团体生活中能够展示出自我的个性与才华，适合做外交官。",
+         "Easy-going, loving, generous and gentle — well liked. Shows personality and talent in group settings; a natural diplomat."],
+        ["优柔寡断的性格让你在多方面错失良机，缺少主张，很少去争取属于自己的机会和权利。",
+         "Indecision costs them chance after chance; short on conviction, they rarely press for the opportunities and rights that are theirs."],
+        ["重感情，温和有耐性，也有较强的依赖心理，不喜欢独处，怕寂寞。",
+         "Values relationships, gentle and patient, but leans heavily on others — dislikes being alone and fears loneliness."],
+        ["学会独立，积极地抓住机会，展现自我的才华会获得成功。",
+         "Learn to stand alone. Take hold of chances and show what you can do — that is where success comes from."]]
+    },
+    3: {
+      pos: [["行动","Action"],["乐观","Optimistic"],["有创意","Creative"],
+            ["善于言词","Way with words"],["精力充沛","Full of energy"],["多才多艺","Many-talented"]],
+      neg: [["任性","Wilful"],["冲动","Impulsive"],["情绪化","Moody"],
+            ["爱批评人","Quick to criticise"],["过度紧张","Overly tense"],["我行我素","Goes their own way"]],
+      rows: [
+        ["为人乐观，是欢乐使者。精力充沛，有极强的行动力，善于言词，具有演说者的潜质",
+         "Optimistic — the one who brings the cheer. Energetic, quick to act, articulate, with the makings of a fine speaker."],
+        ["常常抱怨与批评，怀疑自己，容易愤怒，有时候说话不经过大脑，为人处世不成熟，爱做中心人物",
+         "Complains and criticises, doubts themselves, angers easily, sometimes speaks before thinking; immature in their dealings and hungry to be the centre of attention."],
+        ["感情冲动和敏感，夸张处理事情和紧张，善于感性与愉悦的沟通，迅速与别人建立起关系。",
+         "Impulsive and sensitive; overplays situations and gets wound up. Communicates warmly and enjoyably, and builds rapport fast."],
+        ["说话时技巧一点，管住自己的嘴。",
+         "Bring some craft to how you speak — and keep a hand on your tongue."]]
+    },
+    4: {
+      pos: [["策划","Planner"],["聪明","Clever"],["稳定","Steady"],
+            ["毅力","Persevering"],["善于组织","Good organiser"],["追求知识","Seeks knowledge"]],
+      neg: [["固执","Stubborn"],["死板","Rigid"],["单刀直入","Blunt to a fault"],
+            ["步调缓慢","Slow-paced"],["犹豫不定","Wavering"],["缺乏想象力","Short on imagination"]],
+      rows: [
+        ["聪明，喜欢策划，善于组织，求知欲望强烈，有耐心的。按照步骤执行。为人忠诚是个很值得信任，很有责任感的人，极佳分析者。",
+         "Clever, a planner, a good organiser with a strong appetite for learning and real patience. Works step by step. Loyal, trustworthy, responsible — and an excellent analyst."],
+        ["缺乏想象力，做事过于保守，缺乏安全感",
+         "Short on imagination, too conservative in action, and short on a sense of security."],
+        ["很率直的感情，说话时要说重点和事实不能夸张，喜欢单刀直入，容易无意间得罪人。",
+         "Feelings plainly stated; wants the point and the facts with no embroidery, and goes straight at things — so gives offence without meaning to."],
+        ["放松放宽一些不是原则问题，可灵活处理，可以大胆的去尝试，让生命有更多的选择",
+         "Loosen up where nothing of principle is at stake. Be flexible, take a bold run at things, and give life more options."]]
+    },
+    5: {
+      pos: [["方向","Sense of direction"],["幽默感","Humour"],["自由自在","Free-spirited"],
+            ["随性思考","Thinks freely"],["别出心裁","Original"],["易被启发","Easily inspired"]],
+      neg: [["固执","Stubborn"],["猜疑","Suspicious"],["易怒","Quick-tempered"],
+            ["不能信赖","Unreliable"],["徘徊不定","Wavers"],["过度表现","Overdoes the display"]],
+      rows: [
+        ["方向感强，喜欢冒险，尝试各种新事物，对人热情豪爽，幽默充满趣味，朝气蓬勃有远见。",
+         "A strong sense of direction; loves adventure and trying new things. Warm and open with people, funny and good company, vigorous and far-sighted."],
+        ["固执、冲动、易情绪化、太过自由，放纵自己不愿意受到限制，会错失很多机会",
+         "Stubborn, impulsive, moody, too free — indulges themselves and won't be constrained, and misses a great deal because of it."],
+        ["喜欢无拘无束自由自在的生活，方向感强也相对固执，在依赖和独立两个极端中摇摆不定，他们不是人上人就是人下人。",
+         "Wants a life without restraint. A strong sense of direction that comes with equal stubbornness; swings between dependence and independence — either well above the crowd or well below it."],
+        ["放下自己的固执己见，适当听取别人的建议。对自己的言行加以约束，会获得更多的成功机会。",
+         "Put down the fixed opinion and take advice when it is offered. Rein in what you say and do, and more chances will come."]]
+    },
+    6: {
+      pos: [["忠诚","Loyal"],["远见","Far-sighted"],["爱家","Devoted to family"],
+            ["有同情心","Compassionate"],["和平主义者","Peacemaker"],["聪慧公正","Wise and fair"]],
+      neg: [["浪费","Wasteful"],["自负","Conceited"],["鲁莽","Rash"],
+            ["爱挑剔","Fault-finding"],["有压迫感","Overbearing"],["喋喋不休","Talks on and on"]],
+      rows: [
+        ["忠诚、为人乐天知足，很懂得为他人设想，有良好的策划能力，特别是在钱财管理方面。",
+         "Loyal, cheerful and content, genuinely thoughtful of others, and a capable planner — especially with money."],
+        ["懒散、吹毛求疵、敏感、忧郁。容易迷失在琐事里。会因害怕暴露缺点而避开参加一些活动。",
+         "Slack, nit-picking, sensitive, prone to gloom. Gets lost in trivia, and avoids taking part in things for fear their flaws will show."],
+        ["第六感强，尤其是女性在情感方面敏感，很注重家庭观念。性急，轻过程、只注重结果。",
+         "Strong intuition — women especially are sensitive in matters of feeling — and a deep sense of family. Impatient: cares about the result, not the process."],
+        ["活跃一些，主动一些，爱别人的同时，也应该会照顾自己。",
+         "Be livelier and more forthcoming — and while you are loving others, look after yourself too."]]
+    },
+    7: {
+      pos: [["人缘","Popular"],["博学","Widely learned"],["正义感","Sense of justice"],
+            ["精于分析","Sharp analyst"],["别出心裁","Original"],["内省能力强","Deeply reflective"]],
+      neg: [["孤独","Solitary"],["不体贴","Inconsiderate"],["迟缓冷淡","Slow and cool"],
+            ["行动力弱","Weak follow-through"],["郁郁寡欢","Melancholy"],["懒于职守","Slack in duty"]],
+      rows: [
+        ["善于交际、博爱与包容、非常有人缘。精明能干，懂得提出问题和分析问题。",
+         "Sociable, broadly loving and accepting, genuinely popular. Shrewd and capable — knows how to frame a question and take it apart."],
+        ["行动力弱，比较迟钝冷淡，遇到变故时，易郁郁寡欢，通常会因恐惧和害怕而选择逃避。",
+         "Weak on follow-through, slow and cool; when things go wrong they turn melancholy, and fear usually sends them running."],
+        ["一个世故型性格的人，在人际关系上能左右逢源。但由于他们答应了太多人，却无法满足到每个人，因此别人会认为他们放鸽子。",
+         "Worldly-wise, and works every side of a relationship well. But they say yes to too many people and cannot deliver for all of them — so they get a name for standing people up."],
+        ["欣赏别人的长处，即使他们的喜好、性格和你不大相同，当发生重大问题时，勇于接受事实，不要惧怕改变。",
+         "Appreciate what others are good at, even when their tastes and temperament are nothing like yours. When something serious happens, face the facts and don't fear the change."]]
+    },
+    8: {
+      pos: [["权力","Power"],["亲善","Goodwill"],["给予","Giving"],
+            ["影响力","Influence"],["责任感重","Strong sense of duty"],["企业家潜质","Entrepreneurial"]],
+      neg: [["压力","Under pressure"],["消极","Negative"],["专制","Autocratic"],
+            ["独裁","Dictatorial"],["野心","Overambitious"],["追求虚名","Chases empty status"]],
+      rows: [
+        ["责任感重，有企业家潜质，乐于帮助人，注重名誉，可成为大慈善家。",
+         "A heavy sense of responsibility and a head for enterprise; glad to help, careful of their reputation, and capable of great philanthropy."],
+        ["一旦少年得志，会执迷于金钱、权利。会因为要获得好处而放弃自己的良好德行。",
+         "Early success can leave them fixated on money and power, and willing to trade away their own good character for an advantage."],
+        ["一个责任型的人，答应了人就一定去完成，不然就会坐立难安。大多数是大器晚成。",
+         "A duty-bound sort: once they promise, it must be done or they cannot sit still. Most come into their own late."],
+        ["若始终保持善良、真诚、正直的品格以及不懈的努力，会获得平稳安逸，真正属于自己的幸福。",
+         "Hold on to kindness, sincerity and integrity, and keep working without let-up — that is what brings a settled life and a happiness that is truly yours."]]
+    },
+    9: {
+      pos: [["成功","Success"],["奉献","Devotion"],["有趣的","Entertaining"],
+            ["爱冒险","Adventurous"],["情感丰富","Emotionally rich"],["有洞察力","Insightful"]],
+      neg: [["奢侈","Extravagant"],["寂寞","Lonely"],["虚伪","Insincere"],
+            ["无原则","Unprincipled"],["情感泛滥","Emotionally unrestrained"],["以自我为中心","Self-centred"]],
+      rows: [
+        ["情感丰富，洞察力强，随机应变，说话与做事都会被人认可，而且机会多。",
+         "Emotionally rich, sharply perceptive, quick to adapt; what they say and do earns approval, and opportunities are plentiful."],
+        ["比较不知足，什么都想要。兴趣爱好广泛，但都不大精通，对事情常常是三分钟热情，意志不够坚定。",
+         "Never quite satisfied, wanting everything. Interests are wide but none of them deep; enthusiasm lasts three minutes and the will isn't firm."],
+        ["一个全面型的人，性格开朗、机灵活泼、善于交际，在情感上多情、浪漫、爱梦想。",
+         "An all-rounder: cheerful, quick, lively, sociable; in matters of the heart, romantic, dreamy and easily moved."],
+        ["机会多，但要经得住考验与诱惑，脚踏实地一些，梦想和目标不要脱离现实。",
+         "The chances are there, but you must withstand the tests and the temptations. Keep your feet on the ground and your dreams within reach of reality."]]
+    }
   };
 
   // node geometry, mirroring the printed sheet
@@ -575,10 +784,58 @@
       : '<div>Nothing absent from this chart.</div>';
 
     LAST = count;
+    if (SEL === null) SEL = v.G;
     renderMeanings();
+    renderProfile();
   }
 
-  var LAST = {}, VIEW = "have";
+  var LAST = {}, VIEW = "have", SEL = null;
+
+  function renderProfile() {
+    var n = SEL, p = PROF[n], c = LAST[n] || 0;
+    var keys = function (list, cls, zh, en) {
+      return '<div class="p-col ' + cls + '"><h3><span class="cn">' + zh + '</span>' + en + '</h3><ul>' +
+        list.map(function (k) {
+          return '<li><span class="zh">' + k[0] + '</span><span class="en">' + k[1] + '</span></li>';
+        }).join("") + '</ul></div>';
+    };
+    document.getElementById("profile").innerHTML =
+      '<div class="p-head">' +
+        '<div class="p-num">' + n + '</div>' +
+        '<div class="p-lines">' +
+          '<div class="lead">' + MEAN[n][0] + '</div>' +
+          '<div class="lead-en">' + MEAN[n][1] + '</div>' +
+        '</div>' +
+        '<div class="p-state' + (c ? "" : " gone") + '">' +
+          (c ? "in this chart · " + c + "×" : "missing from this chart") + '</div>' +
+      '</div>' +
+      '<div class="p-keys">' +
+        keys(p.pos, "good", "正面", "Positive") +
+        keys(p.neg, "bad", "负面", "Negative") +
+      '</div>' +
+      p.rows.map(function (r, i) {
+        return '<div class="p-row"><div class="lab"><span class="cn">' + ROWLAB[i][0] + '</span>' +
+          ROWLAB[i][1] + '</div><div class="txt"><span class="zh">' + r[0] +
+          '</span><span class="en">' + r[1] + '</span></div></div>';
+      }).join("") +
+      '<div class="p-row"><div class="lab"><span class="cn">缺失</span>If missing</div>' +
+        '<div class="txt"><span class="zh">' + MISS[n][0] + '</span><span class="en">' +
+        MISS[n][1] + '</span></div></div>';
+  }
+
+  function pick(n) {
+    SEL = +n;
+    renderMeanings();
+    renderProfile();
+    document.getElementById("profile").scrollIntoView({ block: "nearest", behavior: "smooth" });
+  }
+
+  document.addEventListener("click", function (e) {
+    var card = e.target.closest(".m[data-num]");
+    if (card) return pick(card.getAttribute("data-num"));
+    var cell = e.target.closest("[data-val]");
+    if (cell) pick(cell.getAttribute("data-val"));
+  });
 
   function renderMeanings() {
     var set = VIEW === "miss" ? MISS : MEAN;
@@ -588,7 +845,7 @@
         ? (c ? "not missing — does not apply" : "applies to this chart")
         : (c ? "appears " + c + "×" : "missing from this chart");
       return '<div class="m' + (c ? "" : " absent") + (miss && c ? " muted" : "") +
-        '" data-num="' + n + '">' +
+        (n === SEL ? " sel" : "") + '" data-num="' + n + '">' +
         '<div class="num">' + n + '</div>' +
         '<div class="zh">' + set[n][0] + '</div>' +
         '<div class="en">' + set[n][1] + '</div>' +
